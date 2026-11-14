@@ -1,0 +1,128 @@
+
+{% extends "base.html" %}
+
+{% block title %}{{ event.title }} - EventSphere{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <a href="/events/" class="btn btn-outline-secondary mb-3">
+        Back to Events
+    </a>
+
+    <div class="card shadow-sm">
+        {% if event.image_url %}
+        <img
+            src="{{ event.image_url }}"
+            class="card-img-top"
+            alt="{{ event.title }}"
+            style="max-height: 350px; object-fit: cover;"
+        >
+        {% endif %}
+
+        <div class="card-body p-4">
+
+            <span class="badge bg-success mb-2">
+                Published
+            </span>
+
+            <h2 class="fw-bold">{{ event.title }}</h2>
+
+            <p class="text-muted">
+                {{ event.category }}
+            </p>
+
+            <hr>
+
+            <p>
+                <strong>Venue:</strong>
+                {{ venue.name if venue else "Unavailable" }}
+            </p>
+
+            <p>
+                <strong>Location:</strong>
+                {{ venue.location if venue else "Unavailable" }}
+            </p>
+
+            <p>
+                <strong>Start:</strong>
+                {{ event.start_time.strftime("%Y-%m-%d %H:%M") }} UTC
+            </p>
+
+            <p>
+                <strong>End:</strong>
+                {{ event.end_time.strftime("%Y-%m-%d %H:%M") }} UTC
+            </p>
+
+            {% if event.description %}
+            <h5 class="mt-4">About This Event</h5>
+            <p>{{ event.description }}</p>
+            {% endif %}
+
+            <h4 class="mt-4 mb-3">Ticket Categories</h4>
+
+            {% if categories %}
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Available</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for category in categories %}
+                        <tr>
+                            <td>{{ category.name }}</td>
+                            <td>
+                                LKR {{ "%.2f"|format(category.price) }}
+                            </td>
+                            <td>
+                                {% if available[category.id] > 0 %}
+                                <span class="text-success">
+                                    {{ available[category.id] }}
+                                    remaining
+                                </span>
+                                {% else %}
+                                <span class="badge bg-danger">
+                                    Sold Out
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                Ticket categories are not available.
+            </div>
+            {% endif %}
+
+            {% set remaining = available.values() | sum %}
+
+            {% if can_book and remaining > 0 %}
+            <a
+                href="/events/{{ event.id }}/book"
+                class="btn btn-success btn-lg mt-3"
+            >
+                Book Tickets
+            </a>
+            {% elif not can_book %}
+            <div class="alert alert-warning mt-3">
+                Bookings for this event are closed.
+            </div>
+            {% else %}
+            <div class="alert alert-warning mt-3">
+                All tickets are currently reserved or sold out.
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

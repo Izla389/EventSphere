@@ -1,0 +1,92 @@
+
+{% extends "base.html" %}
+
+{% block title %}My Bookings - EventSphere{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">My Bookings</h2>
+
+        <a href="/events/" class="btn btn-primary">
+            Explore Events
+        </a>
+    </div>
+
+    {% if bookings %}
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Reference</th>
+                    <th>Event</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td>
+                        <small>{{ booking.booking_reference }}</small>
+                    </td>
+
+                    <td>
+                        {% if events.get(booking.event_id) %}
+                            {{ events[booking.event_id].title }}
+                        {% else %}
+                            Event unavailable
+                        {% endif %}
+                    </td>
+
+                    <td>{{ booking.quantity }}</td>
+
+                    <td>
+                        LKR {{ "%.2f"|format(booking.total_amount) }}
+                    </td>
+
+                    <td>
+                        {% if booking.status.value == "pending" %}
+                        <span class="badge bg-warning text-dark">
+                            Pending
+                        </span>
+                        {% elif booking.status.value == "confirmed" %}
+                        <span class="badge bg-success">
+                            Confirmed
+                        </span>
+                        {% else %}
+                        <span class="badge bg-secondary">
+                            Cancelled
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <a
+                            href="/my-bookings/{{ booking.id }}"
+                            class="btn btn-sm btn-outline-primary"
+                        >
+                            View
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        You have not made any bookings yet.
+    </div>
+
+    <a href="/events/" class="btn btn-primary">
+        Find an Event
+    </a>
+    {% endif %}
+
+</div>
+{% endblock %}
