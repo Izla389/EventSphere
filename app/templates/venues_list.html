@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Venues - EventSphere{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="mb-1">Venue Management</h2>
+        <p class="text-muted mb-0">
+            Create and manage EventSphere venues.
+        </p>
+    </div>
+    <a href="/admin/venues/new" class="btn btn-primary">
+        + Add Venue
+    </a>
+</div>
+
+{% if venues %}
+<div class="row g-4">
+    {% for venue in venues %}
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+            {% if venue.image_url %}
+            <img
+                src="{{ venue.image_url }}"
+                class="card-img-top"
+                alt="{{ venue.name }}"
+                style="height: 190px; object-fit: cover;"
+                referrerpolicy="no-referrer"
+            >
+            {% endif %}
+
+            <div class="card-body">
+                <h5 class="card-title">{{ venue.name }}</h5>
+
+                <p class="text-muted">
+                    {{ venue.location }}
+                </p>
+
+                <p class="mb-1">
+                    <strong>Capacity:</strong> {{ venue.capacity }}
+                </p>
+
+                <p class="mb-1">
+                    <strong>Hourly rate:</strong>
+                    LKR {{ "%.2f"|format(venue.hourly_hire_rate) }}
+                </p>
+
+                <p>
+                    <strong>Private hire:</strong>
+                    {% if venue.is_open_for_hire %}
+                        <span class="badge bg-success">Available</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Unavailable</span>
+                    {% endif %}
+                </p>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="/admin/venues/{{ venue.id }}"
+                       class="btn btn-outline-primary btn-sm">
+                        View
+                    </a>
+
+                    <a href="/admin/venues/{{ venue.id }}/edit"
+                       class="btn btn-outline-secondary btn-sm">
+                        Edit
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    No venues have been created yet.
+    Click <strong>Add Venue</strong> to create your first venue.
+</div>
+{% endif %}
+
+<div class="mt-4">
+    <a href="/dashboard" class="btn btn-outline-secondary">
+        Back to Dashboard
+    </a>
+</div>
+{% endblock %}

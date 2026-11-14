@@ -29,9 +29,13 @@
                 {% if user.role.value == "admin" %}
                     <h4>Admin Dashboard</h4>
                     <p>Manage venues, events, bookings and agents.</p>
+                    
                     <a href="/admin" class="btn btn-outline-primary">
                         Open Admin Area
                     </a>
+                    <a href="/admin/venues/" class="btn btn-primary mb-2">
+    Manage Venues
+</a>
 
                 {% elif user.role.value == "staff" %}
                     <h4>Gate Staff Dashboard</h4>
