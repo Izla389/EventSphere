@@ -1,31 +1,46 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.responses import RedirectResponse
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from starlette.middleware.sessions import SessionMiddleware
 
+from app.config import settings
 from app.database import get_db
+from app.routers.auth import router as auth_router
 
 
 app = FastAPI(
     title="EventSphere",
     description="Agent-Based Venue Booking and Digital Ticketing Platform",
-    version="1.0.0"
+    version="1.0.0",
 )
+
+
+# Secure, signed cookie-based sessions
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,
+    session_cookie="eventsphere_session",
+    max_age=60 * 60 * 8,
+    same_site="lax",
+    https_only=settings.SESSION_HTTPS_ONLY,
+)
+
+
+# Authentication routes
+app.include_router(auth_router)
 
 
 @app.get("/")
 def home():
-    return {
-        "message": "Welcome to EventSphere!",
-        "project": "IT4123 ICA 02",
-        "status": "Backend is running successfully"
-    }
+    return RedirectResponse(url="/login")
 
 
 @app.get("/health")
 def health_check():
     return {
         "status": "healthy",
-        "application": "EventSphere"
+        "application": "EventSphere",
     }
 
 
@@ -39,11 +54,11 @@ def check_database(db: Session = Depends(get_db)):
         return {
             "status": "connected",
             "database": result,
-            "message": "PostgreSQL connection successful"
+            "message": "PostgreSQL connection successful",
         }
 
     except Exception:
         raise HTTPException(
             status_code=503,
-            detail="Database connection failed"
+            detail="Database connection failed",
         )
