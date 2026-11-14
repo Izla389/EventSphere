@@ -1,0 +1,143 @@
+
+{% extends "base.html" %}
+
+{% block title %}
+{% if category %}Edit Ticket Category{% else %}Add Ticket Category{% endif %}
+- EventSphere
+{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-7">
+
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+
+                <h2 class="mb-2">
+                    {% if category %}
+                        Edit Ticket Category
+                    {% else %}
+                        Add Ticket Category
+                    {% endif %}
+                </h2>
+
+                <p class="text-muted">
+                    Event: <strong>{{ event.title }}</strong>
+                </p>
+
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+                {% endif %}
+
+                <form
+                    method="post"
+                    action="{% if category %}/admin/events/{{ event.id }}/tickets/{{ category.id }}/edit{% else %}/admin/events/{{ event.id }}/tickets/new{% endif %}"
+                >
+
+                    <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="{{ csrf_token }}"
+                    >
+
+                    <div class="mb-3">
+
+                        <label for="name" class="form-label">
+                            Ticket Category Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            class="form-control"
+                            minlength="2"
+                            maxlength="100"
+                            required
+                            placeholder="Example: VIP"
+                            value="{{ form_data.name if form_data else category.name if category else '' }}"
+                        >
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <label for="price" class="form-label">
+                            Ticket Price (LKR)
+                        </label>
+
+                        <input
+                            type="number"
+                            id="price"
+                            name="price"
+                            class="form-control"
+                            min="0"
+                            max="9999999999.99"
+                            step="0.01"
+                            required
+                            placeholder="Example: 2500.00"
+                            value="{{ form_data.price if form_data else category.price if category else '' }}"
+                        >
+
+                    </div>
+
+                    <div class="mb-4">
+
+                        <label for="quantity" class="form-label">
+                            Ticket Quantity
+                        </label>
+
+                        <input
+                            type="number"
+                            id="quantity"
+                            name="quantity"
+                            class="form-control"
+                            min="1"
+                            max="1000000"
+                            step="1"
+                            required
+                            placeholder="Example: 100"
+                            value="{{ form_data.quantity if form_data else category.quantity if category else '' }}"
+                        >
+
+                        <div class="form-text">
+                            The combined quantities of all ticket categories
+                            cannot exceed the venue capacity.
+                        </div>
+
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+                            {% if category %}
+                                Save Changes
+                            {% else %}
+                                Add Ticket Category
+                            {% endif %}
+                        </button>
+
+                        <a
+                            href="/admin/events/{{ event.id }}"
+                            class="btn btn-outline-secondary"
+                        >
+                            Cancel
+                        </a>
+
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

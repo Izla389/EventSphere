@@ -1,0 +1,118 @@
+
+{% extends "base.html" %}
+
+{% block title %}Manage Events - EventSphere{% endblock %}
+
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="mb-1">Event Management</h2>
+        <p class="text-muted mb-0">
+            Create, schedule and manage events.
+        </p>
+    </div>
+
+    <a href="/admin/events/new" class="btn btn-primary">
+        + Create Event
+    </a>
+</div>
+
+{% if events %}
+
+<div class="row g-4">
+    {% for event in events %}
+
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+
+            {% if event.image_url %}
+            <img
+                src="{{ event.image_url }}"
+                alt="{{ event.title }}"
+                class="card-img-top"
+                style="height: 190px; object-fit: cover;"
+                referrerpolicy="no-referrer"
+            >
+            {% endif %}
+
+            <div class="card-body d-flex flex-column">
+
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                    <h5 class="card-title mb-0">
+                        {{ event.title }}
+                    </h5>
+
+                    {% if event.status.value == "draft" %}
+                        <span class="badge bg-secondary">Draft</span>
+                    {% elif event.status.value == "published" %}
+                        <span class="badge bg-success">Published</span>
+                    {% elif event.status.value == "cancelled" %}
+                        <span class="badge bg-danger">Cancelled</span>
+                    {% endif %}
+                </div>
+
+                <p class="text-muted mb-2">
+                    {{ event.category }}
+                </p>
+
+                <p class="mb-2">
+                    <strong>Venue:</strong>
+                    {% if venues.get(event.venue_id) %}
+                        {{ venues[event.venue_id].name }}
+                    {% else %}
+                        Unknown venue
+                    {% endif %}
+                </p>
+
+                <p class="mb-2">
+                    <strong>Starts:</strong>
+                    {{ event.start_time.strftime("%d %b %Y, %I:%M %p") }} UTC
+                </p>
+
+                <p class="mb-3">
+                    <strong>Ends:</strong>
+                    {{ event.end_time.strftime("%d %b %Y, %I:%M %p") }} UTC
+                </p>
+
+                <div class="mt-auto d-flex flex-wrap gap-2">
+                    <a
+                        href="/admin/events/{{ event.id }}"
+                        class="btn btn-outline-primary btn-sm"
+                    >
+                        View Details
+                    </a>
+
+                    {% if event.status.value == "draft" %}
+                    <a
+                        href="/admin/events/{{ event.id }}/edit"
+                        class="btn btn-outline-secondary btn-sm"
+                    >
+                        Edit
+                    </a>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    {% endfor %}
+</div>
+
+{% else %}
+
+<div class="alert alert-info">
+    No events have been created yet.
+    Click <strong>Create Event</strong> to add your first event.
+</div>
+
+{% endif %}
+
+<div class="mt-4">
+    <a href="/dashboard" class="btn btn-outline-secondary">
+        Back to Dashboard
+    </a>
+</div>
+
+{% endblock %}

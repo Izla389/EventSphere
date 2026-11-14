@@ -8,6 +8,7 @@ from app.config import settings
 from app.database import get_db
 from app.routers.auth import router as auth_router
 from app.routers.venues import router as venues_router
+from app.routers import events
 
 
 app = FastAPI(
@@ -31,6 +32,7 @@ app.add_middleware(
 # Authentication routes
 app.include_router(auth_router)
 app.include_router(venues_router)
+app.include_router(events.router)
 
 
 @app.get("/")

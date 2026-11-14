@@ -33,9 +33,13 @@
                     <a href="/admin" class="btn btn-outline-primary">
                         Open Admin Area
                     </a>
-                    <a href="/admin/venues/" class="btn btn-primary mb-2">
-    Manage Venues
+                    <a href="/admin/venues/" class="btn btn-primary mb-2"> Manage Venues
 </a>
+
+<a href="/admin/events/" class="btn btn-success">
+    Manage Events
+</a>
+
 
                 {% elif user.role.value == "staff" %}
                     <h4>Gate Staff Dashboard</h4>
