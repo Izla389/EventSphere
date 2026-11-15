@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}Dashboard - EventSphere{% endblock %}
@@ -7,6 +8,7 @@
     <div class="col-12 col-lg-8">
         <div class="card shadow-sm">
             <div class="card-body p-4">
+
                 <h2>Welcome, {{ user.full_name }}!</h2>
 
                 <p class="text-muted">
@@ -27,64 +29,108 @@
                 <hr>
 
                 {% if user.role.value == "admin" %}
+
                     <h4>Admin Dashboard</h4>
-                    <p>Manage venues, events, bookings and agents.</p>
-                    
-                    <a href="/admin" class="btn btn-outline-primary">
-                        Open Admin Area
-                    </a>
-                    <a href="/admin/venues/" class="btn btn-primary mb-2"> Manage Venues
-</a>
 
-<a href="/admin/events/" class="btn btn-success">
-    Manage Events
-</a><br>
+                    <p>
+                        Manage venues, events, bookings,
+                        attendance reports and agents.
+                    </p>
 
-<a href="/admin/staff-assignments/"
-   class="btn btn-warning">
-    Manage Staff Assignments
-</a>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
 
+                        <a href="/admin"
+                           class="btn btn-outline-primary">
+                            Open Admin Area
+                        </a>
 
-<a href="/events/" class="btn btn-primary">
-    Explore Events
-</a>
+                        <a href="/admin/venues/"
+                           class="btn btn-primary">
+                            Manage Venues
+                        </a>
 
-<a href="/my-bookings/" class="btn btn-outline-primary">
-    My Bookings
-</a>
+                        <a href="/admin/events/"
+                           class="btn btn-success">
+                            Manage Events
+                        </a>
 
+                        <a href="/admin/staff-assignments/"
+                           class="btn btn-warning">
+                            Manage Staff Assignments
+                        </a>
 
+                        <a href="/admin/attendance-reports/"
+                           class="btn btn-info">
+                            Attendance Reports
+                        </a>
 
+                        <a href="/events/"
+                           class="btn btn-primary">
+                            Explore Events
+                        </a>
+
+                        <a href="/my-bookings/"
+                           class="btn btn-outline-primary">
+                            My Bookings
+                        </a>
+
+                    </div>
 
                 {% elif user.role.value == "staff" %}
+
                     <h4>Gate Staff Dashboard</h4>
-                    <p>Verify tickets and manage event entry.</p>
-                  <a href="/staff/dashboard" class="btn btn-outline-primary">
-    Open Staff Area
-</a>
+
+                    <p>
+                        Verify tickets and manage event entry.
+                    </p>
+
+                    <a href="/staff/dashboard"
+                       class="btn btn-outline-primary">
+                        Open Staff Area
+                    </a>
+
                 {% else %}
+
                     <h4>Attendee Dashboard</h4>
-                    <p>Browse events and manage your bookings.</p>
-                   <a href="/events/" class="btn btn-outline-primary">
-    Browse Events
-</a>
-<a href="/my-bookings/" class="btn btn-outline-success">
-    My Bookings
-</a>
+
+                    <p>
+                        Browse events and manage your bookings.
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-2">
+
+                        <a href="/events/"
+                           class="btn btn-outline-primary">
+                            Browse Events
+                        </a>
+
+                        <a href="/my-bookings/"
+                           class="btn btn-outline-success">
+                            My Bookings
+                        </a>
+
+                    </div>
+
                 {% endif %}
 
                 <hr>
 
                 <form method="post" action="/logout">
-                    <input type="hidden"
-                           name="csrf_token"
-                           value="{{ csrf_token }}">
 
-                    <button type="submit" class="btn btn-danger">
+                    <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="{{ csrf_token }}"
+                    >
+
+                    <button
+                        type="submit"
+                        class="btn btn-danger">
                         Logout
                     </button>
+
                 </form>
+
             </div>
         </div>
     </div>

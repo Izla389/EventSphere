@@ -1,3 +1,4 @@
+
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy import text
@@ -13,6 +14,7 @@ from app.routers import attendee
 from app.routers import checkin
 from app.routers import staff_dashboard
 from app.routers import staff_assignments
+from app.routers import attendance_reports
 
 
 app = FastAPI(
@@ -35,15 +37,24 @@ app.add_middleware(
 
 # Authentication routes
 app.include_router(auth_router)
+
+# Admin venue and event management
 app.include_router(venues_router)
 app.include_router(events.router)
 
+# Attendee routes
 app.include_router(attendee.router)
 app.include_router(attendee.bookings_router)
+
+# Staff routes
 app.include_router(checkin.router)
 app.include_router(staff_dashboard.router)
+
+# Admin staff assignment management
 app.include_router(staff_assignments.router)
 
+# Admin attendance reports
+app.include_router(attendance_reports.router)
 
 
 @app.get("/")
