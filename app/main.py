@@ -15,6 +15,7 @@ from app.routers import checkin
 from app.routers import staff_dashboard
 from app.routers import staff_assignments
 from app.routers import attendance_reports
+from app.routers import agent_dashboard
 
 
 app = FastAPI(
@@ -55,6 +56,8 @@ app.include_router(staff_assignments.router)
 
 # Admin attendance reports
 app.include_router(attendance_reports.router)
+
+app.include_router(agent_dashboard.router)
 
 
 @app.get("/")
