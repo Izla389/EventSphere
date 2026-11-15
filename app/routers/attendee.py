@@ -8,8 +8,13 @@ from fastapi import (
     HTTPException,
     Request,
 )
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import (
+    HTMLResponse,
+    RedirectResponse,
+    Response,
+)
 from fastapi.templating import Jinja2Templates
+
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -27,11 +32,17 @@ from app.models.models import (
     BookingStatus,
     Event,
     EventStatus,
+    Ticket,
     TicketCategory,
     User,
     UserRole,
     Venue,
 )
+from app.payment_service import (
+    PaymentValidationError,
+    confirm_simulated_payment,
+)
+from app.qr_service import generate_ticket_qr
 from app.security import (
     create_csrf_token,
     verify_csrf_token,
@@ -52,6 +63,10 @@ bookings_router = APIRouter(
     ],
 )
 
+
+# ----------------------------------------------
+# Helper functions
+# ----------------------------------------------
 
 def utc_now():
     return datetime.now(timezone.utc)
@@ -348,7 +363,7 @@ def my_bookings(
 
 
 # ----------------------------------------------
-# ATTENDEE: Booking details
+# ATTENDEE: Booking details with QR tickets
 # ----------------------------------------------
 
 @bookings_router.get(
@@ -376,6 +391,16 @@ def my_booking_detail(
         booking.ticket_category_id,
     )
 
+    # Retrieve tickets only for confirmed bookings.
+    tickets = []
+
+    if booking.status == BookingStatus.CONFIRMED:
+        tickets = db.scalars(
+            select(Ticket)
+            .where(Ticket.booking_id == booking.id)
+            .order_by(Ticket.id)
+        ).all()
+
     return templates.TemplateResponse(
         request=request,
         name="attendee_booking_detail.html",
@@ -383,6 +408,7 @@ def my_booking_detail(
             "booking": booking,
             "event": event,
             "category": category,
+            "tickets": tickets,
             "csrf_token": create_csrf_token(request),
         },
     )
@@ -425,7 +451,7 @@ def cancel_pending_booking(
                 detail="Event not found.",
             )
 
-        # Lock this booking to serialize cancellation attempts.
+        # Lock booking before cancellation.
         booking = db.scalar(
             select(Booking)
             .where(
@@ -447,7 +473,7 @@ def cancel_pending_booking(
                 detail="Only pending bookings can be cancelled.",
             )
 
-        # Lock inventory before releasing the reservation.
+        # Lock ticket inventory.
         category = db.scalar(
             select(TicketCategory)
             .where(
@@ -484,3 +510,108 @@ def cancel_pending_booking(
     except SQLAlchemyError:
         db.rollback()
         raise
+
+
+# ----------------------------------------------
+# ATTENDEE: Confirm simulated payment
+# ----------------------------------------------
+
+@bookings_router.post("/{booking_id}/pay")
+def pay_for_booking(
+    booking_id: int,
+    request: Request,
+    csrf_token: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_role(UserRole.ATTENDEE)
+    ),
+):
+    verify_csrf_token(request, csrf_token)
+
+    try:
+        payment, booking, tickets = (
+            confirm_simulated_payment(
+                db,
+                booking_id=booking_id,
+                user_id=current_user.id,
+            )
+        )
+
+        # Commit payment, booking and tickets together.
+        db.commit()
+
+        return booking_redirect(booking.id)
+
+    except PaymentValidationError as exc:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=409,
+            detail=str(exc),
+        ) from exc
+
+    except IntegrityError as exc:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=409,
+            detail="Unable to confirm this payment.",
+        ) from exc
+
+    except SQLAlchemyError:
+        db.rollback()
+        raise
+
+
+# ----------------------------------------------
+# ATTENDEE: View ticket QR code securely
+# ----------------------------------------------
+
+@bookings_router.get(
+    "/{booking_id}/tickets/{ticket_id}/qr"
+)
+def view_ticket_qr(
+    booking_id: int,
+    ticket_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_role(UserRole.ATTENDEE)
+    ),
+):
+    # Verify booking ownership.
+    booking = get_attendee_booking(
+        db,
+        booking_id,
+        current_user.id,
+    )
+
+    if booking.status != BookingStatus.CONFIRMED:
+        raise HTTPException(
+            status_code=404,
+            detail="Ticket not available.",
+        )
+
+    # Find the ticket belonging to this booking.
+    ticket = db.scalar(
+        select(Ticket).where(
+            Ticket.id == ticket_id,
+            Ticket.booking_id == booking.id,
+        )
+    )
+
+    if ticket is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Ticket not found.",
+        )
+
+    qr_png = generate_ticket_qr(ticket.qr_token)
+
+    return Response(
+        content=qr_png,
+        media_type="image/png",
+        headers={
+            "Cache-Control": "private, no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )

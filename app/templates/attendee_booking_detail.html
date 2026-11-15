@@ -55,10 +55,84 @@
                         <span class="badge bg-warning text-dark">
                             Pending
                         </span>
+
                         {% elif booking.status.value == "confirmed" %}
                         <span class="badge bg-success">
                             Confirmed
                         </span>
+
+                        
+<!-- GENERATED QR CODE TICKETS -->
+
+{% if tickets %}
+
+<h5 class="fw-bold mt-4 mb-3">
+    Your Tickets
+</h5>
+
+<p class="text-muted">
+    Show your QR code at the event entrance.
+    Each ticket has a unique QR code.
+</p>
+
+<div class="row g-3">
+
+    {% for ticket in tickets %}
+
+    <div class="col-md-6">
+        <div class="card border-success h-100">
+            <div class="card-body text-center">
+
+                <h6 class="fw-bold">
+                    Ticket {{ loop.index }}
+                </h6>
+
+                <img
+                    src="/my-bookings/{{ booking.id }}/tickets/{{ ticket.id }}/qr"
+                    alt="QR code for ticket {{ loop.index }}"
+                    class="img-fluid my-3"
+                    style="max-width: 220px;"
+                >
+
+                <p class="mb-1">
+                    <strong>Ticket ID:</strong>
+                    {{ ticket.id }}
+                </p>
+
+                <p class="mb-0">
+                    <strong>Status:</strong>
+                    {% if ticket.status.value == "valid" %}
+                    <span class="badge bg-success">
+                        Valid
+                    </span>
+                    {% elif ticket.status.value == "used" %}
+                    <span class="badge bg-secondary">
+                        Used
+                    </span>
+                    {% else %}
+                    <span class="badge bg-danger">
+                        Cancelled
+                    </span>
+                    {% endif %}
+                </p>
+
+            </div>
+        </div>
+    </div>
+
+    {% endfor %}
+
+</div>
+
+{% else %}
+
+<div class="alert alert-warning mt-3">
+    No tickets were found for this booking.
+</div>
+
+{% endif %}
+
+
                         {% else %}
                         <span class="badge bg-secondary">
                             Cancelled
@@ -72,13 +146,50 @@
                         UTC
                     </p>
 
+                    <!-- PENDING BOOKING -->
+
                     {% if booking.status.value == "pending" %}
 
                     <div class="alert alert-info mt-4">
-                        Your tickets are reserved.
-                        Payment confirmation will be implemented
-                        in a later step.
+                        <strong>Payment Required</strong>
+                        <p class="mb-0 mt-2">
+                            Your tickets are currently reserved.
+                            Complete the simulated payment to
+                            confirm your booking and generate
+                            your tickets.
+                        </p>
                     </div>
+
+                    <!-- PAY NOW BUTTON -->
+
+<!-- PAY NOW BUTTON -->
+
+<form
+    method="post"
+    action="/my-bookings/{{ booking.id }}/pay"
+    onsubmit="return confirm('Confirm this simulated payment? No real money will be charged.');"
+    class="mb-3"
+>
+    <input
+        type="hidden"
+        name="csrf_token"
+        value="{{ csrf_token }}"
+    >
+
+    <button
+        type="submit"
+        class="btn btn-success"
+    >
+        Pay Now (Simulated)
+    </button>
+</form>
+
+
+                    
+
+                        
+
+                    <!-- CANCEL RESERVATION BUTTON -->
 
                     <form
                         method="post"
@@ -93,11 +204,25 @@
 
                         <button
                             type="submit"
-                            class="btn btn-danger"
+                            class="btn btn-outline-danger"
                         >
                             Cancel Reservation
                         </button>
                     </form>
+
+                    <!-- CONFIRMED BOOKING -->
+
+                    {% elif booking.status.value == "confirmed" %}
+
+                    <div class="alert alert-success mt-4">
+                        <strong>Payment Successful!</strong>
+                        <p class="mb-0 mt-2">
+                            Your booking has been confirmed.
+                            Your tickets have been generated.
+                        </p>
+                    </div>
+
+                    <!-- CANCELLED BOOKING -->
 
                     {% elif booking.status.value == "cancelled" %}
 
