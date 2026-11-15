@@ -294,7 +294,7 @@ class Booking(Base):
         default=BookingStatus.PENDING,
         nullable=False
     )
-    created_at: Mapped[datetime] = mapped_column(
+    created_at: Mapped[datetime] =  mapped_column(
         DateTime(timezone=True), default=utc_now
     )
     cancelled_at: Mapped[datetime | None] = mapped_column(
