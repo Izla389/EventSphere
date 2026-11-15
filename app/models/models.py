@@ -641,3 +641,49 @@ class AgentInbox(Base):
             "receiver", "processed"
         ),
     )
+
+
+# -----------------------------
+# 14. EVENT STAFF ASSIGNMENTS
+# -----------------------------
+
+class EventStaffAssignment(Base):
+    __tablename__ = "event_staff_assignments"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
+
+    event_id: Mapped[int] = mapped_column(
+        ForeignKey("events.id"),
+        nullable=False,
+    )
+
+    staff_user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+    )
+
+    assigned_by: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+    )
+
+    assigned_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utc_now,
+        nullable=False,
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "event_id",
+            "staff_user_id",
+            name="uq_event_staff_assignment",
+        ),
+        Index(
+            "ix_event_staff_staff_user",
+            "staff_user_id",
+        ),
+    )

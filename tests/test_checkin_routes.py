@@ -15,6 +15,7 @@ from app.models.models import (
     Booking,
     BookingStatus,
     Event,
+    EventStaffAssignment,
     EventStatus,
     Ticket,
     TicketCategory,
@@ -133,6 +134,15 @@ def ticket_data(client):
         db.add(event)
         db.flush()
 
+        # Assign staff to this event.
+        db.add(
+            EventStaffAssignment(
+                event_id=event.id,
+                staff_user_id=staff.id,
+                assigned_by=admin.id,
+            )
+        )
+
         category = TicketCategory(
             event_id=event.id,
             name="General Admission",
@@ -172,6 +182,7 @@ def ticket_data(client):
             "event_id": event.id,
             "ticket_id": ticket.id,
             "staff_id": staff.id,
+            "admin_id": admin.id,
             "qr_token": ticket.qr_token,
         }
 
@@ -361,7 +372,6 @@ def test_duplicate_checkin_is_rejected(
 
     assert first.status_code == 200
     assert second.status_code == 200
-
     assert "already been checked in" in second.text
 
     ticket = get_ticket(
@@ -509,8 +519,20 @@ def test_wrong_event_scan_increases_attempt_count(
         )
 
         db.add(other_event)
-        db.commit()
+        db.flush()
+
+        # Assign staff to the second event so the
+        # wrong-event ticket validation can run.
+        db.add(
+            EventStaffAssignment(
+                event_id=other_event.id,
+                staff_user_id=ticket_data["staff_id"],
+                assigned_by=ticket_data["admin_id"],
+            )
+        )
+
         other_event_id = other_event.id
+        db.commit()
 
     csrf = get_csrf(client, "/staff/checkin/")
 
@@ -533,5 +555,80 @@ def test_wrong_event_scan_increases_attempt_count(
 
     assert ticket.status == TicketStatus.VALID
     assert ticket.scan_attempts == 1
+    assert ticket.checked_in_at is None
+    assert ticket.checked_in_by is None
+
+
+# ----------------------------------------------
+# Test 12 — Unassigned staff cannot check in
+# ----------------------------------------------
+
+def test_unassigned_staff_cannot_check_in(
+    client,
+    ticket_data,
+):
+    with client.testing_session() as db:
+        create_user(
+            db,
+            UserRole.STAFF,
+            "unassigned@checkin.test",
+        )
+        db.commit()
+
+    login(client, "unassigned@checkin.test")
+
+    response = submit_checkin(client, ticket_data)
+
+    assert response.status_code == 200
+    assert "not assigned to this event" in response.text
+
+    ticket = get_ticket(
+        client,
+        ticket_data["ticket_id"],
+    )
+
+    assert ticket.status == TicketStatus.VALID
+    assert ticket.scan_attempts == 0
+    assert ticket.checked_in_at is None
+    assert ticket.checked_in_by is None
+
+
+# ----------------------------------------------
+# Test 13 — Removed assignment blocks check-in
+# ----------------------------------------------
+
+def test_removed_assignment_blocks_checkin_route(
+    client,
+    ticket_data,
+):
+    with client.testing_session() as db:
+        assignment = db.scalar(
+            select(EventStaffAssignment).where(
+                EventStaffAssignment.event_id
+                == ticket_data["event_id"],
+                EventStaffAssignment.staff_user_id
+                == ticket_data["staff_id"],
+            )
+        )
+
+        assert assignment is not None
+
+        db.delete(assignment)
+        db.commit()
+
+    login(client, "staff@checkin.test")
+
+    response = submit_checkin(client, ticket_data)
+
+    assert response.status_code == 200
+    assert "not assigned to this event" in response.text
+
+    ticket = get_ticket(
+        client,
+        ticket_data["ticket_id"],
+    )
+
+    assert ticket.status == TicketStatus.VALID
+    assert ticket.scan_attempts == 0
     assert ticket.checked_in_at is None
     assert ticket.checked_in_by is None

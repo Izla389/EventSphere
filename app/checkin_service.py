@@ -8,6 +8,7 @@ from app.models.models import (
     Booking,
     BookingStatus,
     Event,
+    EventStaffAssignment,
     EventStatus,
     Ticket,
     TicketStatus,
@@ -44,11 +45,14 @@ def check_in_ticket(
     """
     Validate and check in a ticket.
 
+    Staff members must be assigned to the event.
+    Active administrators retain check-in access.
+
     The caller must commit after success.
 
-    For rejected scans of an existing ticket, the caller
-    may commit the scan-attempt increment when the
-    exception's save_scan_attempt flag is True.
+    Rejected scans of existing tickets may have their
+    attempt count committed when save_scan_attempt
+    is True.
 
     PostgreSQL row locking prevents simultaneous
     check-ins of the same ticket.
@@ -64,6 +68,7 @@ def check_in_ticket(
             "Invalid event ID."
         )
 
+    # Verify the account performing the check-in.
     staff = db.get(User, staff_user_id)
 
     if staff is None or not staff.is_active:
@@ -79,6 +84,7 @@ def check_in_ticket(
             "You are not authorized to check in tickets."
         )
 
+    # Verify the requested event.
     event = db.get(Event, event_id)
 
     if event is None:
@@ -91,6 +97,23 @@ def check_in_ticket(
             "This event is not active."
         )
 
+    # Staff may check in tickets only for assigned events.
+    # Administrators retain their existing access.
+    if staff.role == UserRole.STAFF:
+        assignment = db.scalar(
+            select(EventStaffAssignment).where(
+                EventStaffAssignment.event_id == event_id,
+                EventStaffAssignment.staff_user_id
+                == staff_user_id,
+            )
+        )
+
+        if assignment is None:
+            raise CheckInValidationError(
+                "You are not assigned to this event."
+            )
+
+    # Lock the ticket row to prevent duplicate check-ins.
     ticket = db.scalar(
         select(Ticket)
         .where(Ticket.qr_token == qr_token.strip())
@@ -149,6 +172,7 @@ def check_in_ticket(
             save_scan_attempt=True,
         )
 
+    # Mark the ticket as checked in.
     ticket.status = TicketStatus.USED
     ticket.checked_in_at = datetime.now(timezone.utc)
     ticket.checked_in_by = staff_user_id

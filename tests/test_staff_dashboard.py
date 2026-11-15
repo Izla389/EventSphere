@@ -15,6 +15,7 @@ from app.models.models import (
     Booking,
     BookingStatus,
     Event,
+    EventStaffAssignment,
     EventStatus,
     Ticket,
     TicketCategory,
@@ -101,13 +102,17 @@ def login(client, email):
     assert response.status_code == 303, response.text
 
 
+# ----------------------------------------------
+# Dashboard test data
+# ----------------------------------------------
+
 @pytest.fixture
 def dashboard_data(client):
     with client.testing_session() as db:
         admin = create_user(
             db, UserRole.ADMIN, "admin@dashboard.test"
         )
-        create_user(
+        staff = create_user(
             db, UserRole.STAFF, "staff@dashboard.test"
         )
         attendee = create_user(
@@ -142,6 +147,14 @@ def dashboard_data(client):
         )
         db.add(event)
         db.flush()
+
+        # Assign the staff member to the event.
+        assignment = EventStaffAssignment(
+            event_id=event.id,
+            staff_user_id=staff.id,
+            assigned_by=admin.id,
+        )
+        db.add(assignment)
 
         category = TicketCategory(
             event_id=event.id,
@@ -185,9 +198,16 @@ def dashboard_data(client):
                 )
             )
 
+        data = {
+            "event_title": event.title,
+            "event_id": event.id,
+            "staff_id": staff.id,
+            "admin_id": admin.id,
+        }
+
         db.commit()
 
-    return {"event_title": "Dashboard Statistics Test Event"}
+    return data
 
 
 # ----------------------------------------------
@@ -279,6 +299,17 @@ def test_dashboard_handles_event_with_no_tickets(
             status=EventStatus.PUBLISHED,
         )
         db.add(empty_event)
+        db.flush()
+
+        # Assign staff to the empty event as well.
+        db.add(
+            EventStaffAssignment(
+                event_id=empty_event.id,
+                staff_user_id=dashboard_data["staff_id"],
+                assigned_by=dashboard_data["admin_id"],
+            )
+        )
+
         db.commit()
 
     login(client, "staff@dashboard.test")
@@ -294,3 +325,60 @@ def test_dashboard_handles_event_with_no_tickets(
     )[1].split("</div>\n        </div>", 1)[0]
 
     assert "0.0%" in empty_section or "0%" in empty_section
+
+
+# ----------------------------------------------
+# Test 6 — Unassigned events are hidden
+# ----------------------------------------------
+
+def test_unassigned_event_is_hidden(
+    client, dashboard_data
+):
+    with client.testing_session() as db:
+        original_event = db.get(
+            Event, dashboard_data["event_id"]
+        )
+
+        unassigned_event = Event(
+            title="Unassigned Private Event",
+            category="Workshop",
+            description="Not assigned to current staff",
+            venue_id=original_event.venue_id,
+            organiser_id=original_event.organiser_id,
+            start_time=original_event.start_time,
+            end_time=original_event.end_time,
+            status=EventStatus.PUBLISHED,
+        )
+        db.add(unassigned_event)
+        db.commit()
+
+    login(client, "staff@dashboard.test")
+
+    response = client.get("/staff/dashboard")
+
+    assert response.status_code == 200
+    assert dashboard_data["event_title"] in response.text
+    assert "Unassigned Private Event" not in response.text
+
+
+# ----------------------------------------------
+# Test 7 — Staff without assignments
+# ----------------------------------------------
+
+def test_staff_without_assignments_sees_no_events(
+    client, dashboard_data
+):
+    with client.testing_session() as db:
+        create_user(
+            db,
+            UserRole.STAFF,
+            "unassigned@dashboard.test",
+        )
+        db.commit()
+
+    login(client, "unassigned@dashboard.test")
+
+    response = client.get("/staff/dashboard")
+
+    assert response.status_code == 200
+    assert "Dashboard Statistics Test Event" not in response.text

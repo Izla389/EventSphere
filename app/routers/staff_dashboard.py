@@ -9,6 +9,7 @@ from app.database import get_db
 from app.dependencies import require_role
 from app.models.models import (
     Event,
+    EventStaffAssignment,
     EventStatus,
     Ticket,
     TicketStatus,
@@ -35,17 +36,24 @@ def staff_dashboard(
         require_role(UserRole.STAFF)
     ),
 ):
-    # Get published events.
+    # Get only published events assigned to this staff member.
     events = db.scalars(
         select(Event)
-        .where(Event.status == EventStatus.PUBLISHED)
+        .join(
+            EventStaffAssignment,
+            EventStaffAssignment.event_id == Event.id,
+        )
+        .where(
+            Event.status == EventStatus.PUBLISHED,
+            EventStaffAssignment.staff_user_id == current_user.id,
+        )
         .order_by(Event.start_time)
     ).all()
 
     event_statistics = []
 
     for event in events:
-        # Total tickets issued.
+        # Total tickets issued for this event.
         total_tickets = db.scalar(
             select(func.count(Ticket.id))
             .where(Ticket.event_id == event.id)

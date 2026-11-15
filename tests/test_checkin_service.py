@@ -16,6 +16,7 @@ from app.models.models import (
     Booking,
     BookingStatus,
     Event,
+    EventStaffAssignment,
     EventStatus,
     Ticket,
     TicketCategory,
@@ -109,6 +110,15 @@ def sample_data(db):
     db.add(event)
     db.flush()
 
+    # Assign the staff member to the event.
+    db.add(
+        EventStaffAssignment(
+            event_id=event.id,
+            staff_user_id=staff.id,
+            assigned_by=admin.id,
+        )
+    )
+
     category = TicketCategory(
         event_id=event.id,
         name="General",
@@ -167,9 +177,12 @@ def perform_checkin(db, sample_data, **overrides):
     return check_in_ticket(db, **arguments)
 
 
+# ----------------------------------------------
+# Existing validation tests
+# ----------------------------------------------
+
 def test_valid_ticket_can_be_checked_in(db, sample_data):
     ticket = perform_checkin(db, sample_data)
-
     db.commit()
 
     assert ticket.status == TicketStatus.USED
@@ -209,7 +222,6 @@ def test_attendee_cannot_check_in_ticket(db, sample_data):
     db.rollback()
 
     ticket = db.get(Ticket, sample_data["ticket_id"])
-
     assert ticket.status == TicketStatus.VALID
 
 
@@ -227,7 +239,6 @@ def test_invalid_qr_token_is_rejected(db, sample_data):
     db.rollback()
 
 
-
 def test_wrong_event_is_rejected(db, sample_data):
     with pytest.raises(
         CheckInValidationError,
@@ -240,7 +251,6 @@ def test_wrong_event_is_rejected(db, sample_data):
         )
 
     db.rollback()
-
 
 
 def test_cancelled_ticket_is_rejected(db, sample_data):
@@ -262,7 +272,6 @@ def test_unconfirmed_booking_is_rejected(db, sample_data):
         Booking,
         sample_data["booking_id"],
     )
-
     booking.status = BookingStatus.PENDING
     db.commit()
 
@@ -281,8 +290,124 @@ def test_admin_can_check_in_ticket(db, sample_data):
         sample_data,
         staff_user_id=sample_data["admin_id"],
     )
-
     db.commit()
 
     assert ticket.status == TicketStatus.USED
     assert ticket.checked_in_by == sample_data["admin_id"]
+
+
+# ----------------------------------------------
+# New event-assignment security tests
+# ----------------------------------------------
+
+def test_unassigned_staff_cannot_check_in_ticket(
+    db, sample_data
+):
+    unassigned_staff = User(
+        full_name="Unassigned Staff",
+        email="unassigned@checkin.test",
+        password_hash="test-hash",
+        role=UserRole.STAFF,
+        is_active=True,
+    )
+    db.add(unassigned_staff)
+    db.commit()
+
+    with pytest.raises(
+        CheckInValidationError,
+        match="not assigned to this event",
+    ) as error:
+        perform_checkin(
+            db,
+            sample_data,
+            staff_user_id=unassigned_staff.id,
+        )
+
+    assert error.value.save_scan_attempt is False
+
+    db.rollback()
+
+    ticket = db.get(Ticket, sample_data["ticket_id"])
+    assert ticket.status == TicketStatus.VALID
+    assert ticket.scan_attempts == 0
+    assert ticket.checked_in_by is None
+
+
+def test_removed_assignment_blocks_checkin(
+    db, sample_data
+):
+    assignment = db.query(EventStaffAssignment).filter_by(
+        event_id=sample_data["event_id"],
+        staff_user_id=sample_data["staff_id"],
+    ).one()
+
+    db.delete(assignment)
+    db.commit()
+
+    with pytest.raises(
+        CheckInValidationError,
+        match="not assigned to this event",
+    ):
+        perform_checkin(db, sample_data)
+
+    db.rollback()
+
+    ticket = db.get(Ticket, sample_data["ticket_id"])
+    assert ticket.status == TicketStatus.VALID
+    assert ticket.scan_attempts == 0
+
+
+def test_assignment_to_different_event_does_not_allow_checkin(
+    db, sample_data
+):
+    original_event = db.get(
+        Event, sample_data["event_id"]
+    )
+
+    other_event = Event(
+        title="Another Assigned Event",
+        category="Workshop",
+        description="Assignment isolation test",
+        venue_id=original_event.venue_id,
+        organiser_id=original_event.organiser_id,
+        start_time=original_event.start_time,
+        end_time=original_event.end_time,
+        status=EventStatus.PUBLISHED,
+    )
+    db.add(other_event)
+    db.flush()
+
+    other_staff = User(
+        full_name="Other Event Staff",
+        email="otherstaff@checkin.test",
+        password_hash="test-hash",
+        role=UserRole.STAFF,
+        is_active=True,
+    )
+    db.add(other_staff)
+    db.flush()
+
+    db.add(
+        EventStaffAssignment(
+            event_id=other_event.id,
+            staff_user_id=other_staff.id,
+            assigned_by=sample_data["admin_id"],
+        )
+    )
+    db.commit()
+
+    with pytest.raises(
+        CheckInValidationError,
+        match="not assigned to this event",
+    ):
+        perform_checkin(
+            db,
+            sample_data,
+            staff_user_id=other_staff.id,
+        )
+
+    db.rollback()
+
+    ticket = db.get(Ticket, sample_data["ticket_id"])
+    assert ticket.status == TicketStatus.VALID
+    assert ticket.scan_attempts == 0
