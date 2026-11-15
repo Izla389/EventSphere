@@ -11,6 +11,7 @@ from app.routers.venues import router as venues_router
 from app.routers import events
 from app.routers import attendee
 from app.routers import checkin
+from app.routers import staff_dashboard
 
 
 app = FastAPI(
@@ -39,6 +40,7 @@ app.include_router(events.router)
 app.include_router(attendee.router)
 app.include_router(attendee.bookings_router)
 app.include_router(checkin.router)
+app.include_router(staff_dashboard.router)
 
 
 
