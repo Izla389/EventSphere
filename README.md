@@ -1,270 +1,592 @@
-# EventSphere
+# EventSphere – Multi-Agent Venue Booking and Digital Ticketing Platform
 
-**IT4123 – Agent Based Computing | ICA 02**
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green)
+![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-blue)
+![Pytest](https://img.shields.io/badge/Testing-Pytest-orange)
+![Deployment](https://img.shields.io/badge/Deployment-Vercel-black)
 
-EventSphere is an agent-based venue booking and digital ticketing platform developed using Python, FastAPI, PostgreSQL, SQLAlchemy and Bootstrap.
+## 1. Project Overview
 
-The project aims to provide secure event management, venue booking, digital ticketing and intelligent decision-making through multiple communicating agents.
+**EventSphere** is a mobile-friendly venue booking and digital ticketing platform developed as part of the IT4123 – Agent Based Computing Practical (ICA 02) assignment.
 
-## Project Status
+The platform provides a centralized system for managing university events, booking tickets, hiring venues and verifying digital tickets through QR codes.
 
-### Completed
-- Development environment setup
-- FastAPI backend initialization
-- PostgreSQL database connection
-- SQLAlchemy database models for 13 application tables
-- Alembic database migrations
-- Secure attendee registration
-- User login and logout
-- Argon2 password hashing
-- Session-based authentication
-- CSRF protection
-- Role-based access control for admin, staff and attendees
-- Admin and staff account creation through a local script
-- Responsive registration, login and dashboard pages
-- Six automated authentication tests passing
+EventSphere uses a multi-agent architecture in which autonomous software agents cooperate to make decisions and manage different activities within the platform.
 
-### In Progress
-- Admin venue management (create, view, update and delete)
+The system supports three types of users:
 
-### Upcoming Features
-- Event management and scheduling
-- Ticket categories and pricing
-- Ticket booking and simulated payments
-- QR-code ticket generation and verification
-- Private venue hire requests
-- Multi-agent communication and decision-making
-- Automated waitlist management
-- User notifications
-- Admin analytics dashboard
-- Final responsive interface improvements
-- Automated integration testing
-- Public HTTPS deployment
+- **Admin / Organiser:** Manages venues, events, ticket categories, bookings and event activities.
+- **Gate Staff:** Verifies digital tickets and manages attendee check-ins.
+- **Attendee:** Browses events, books tickets, manages bookings and requests private venue hire.
 
-## Technology Stack
+The application is accessible through a web browser and does not require users to install a mobile application.
 
-**Backend**
-- Python 3.11+
-- FastAPI
-- SQLAlchemy
-- Pydantic
+## 2. Live Application
 
-**Database**
-- PostgreSQL
-- Alembic
+| Resource | Link |
+|---|---|
+| Live Website | https://event-sphere-taupe-omega.vercel.app |
+| API Documentation | https://event-sphere-taupe-omega.vercel.app/docs |
+| GitHub Repository | https://github.com/Izla389/EventSphere |
 
-**Frontend**
-- HTML
-- CSS
-- Bootstrap
-- Jinja2 templates
+**Deployment Architecture:**
+- Application hosting: Vercel
+- Production database: Neon PostgreSQL
+- Source code management: GitHub
+- Backend framework: FastAPI
 
-**Authentication and Security**
-- Argon2 password hashing using pwdlib
-- Signed session cookies
-- CSRF protection
-- Role-based access control
+## 3. Main Features
 
-**Testing**
-- Pytest
-- FastAPI TestClient
-- SQLite in-memory test database
+### User Management
+- User registration and login.
+- Secure password hashing.
+- Role-based access control.
+- Separate access for Admin, Staff and Attendee.
 
-**Version Control**
-- Git
-- GitHub Desktop
-- GitHub
+### Venue Management
+- Create and update venues.
+- Manage venue names and locations.
+- Configure venue capacity.
+- Set hourly venue hire rates.
+- Manage private hire availability.
 
-## User Roles
+### Event Management
+- Create and update events.
+- Assign venues to events.
+- Configure event dates and times.
+- Create ticket categories.
+- Set ticket prices and quantities.
+- Publish or cancel events.
 
-EventSphere supports three user roles:
+### Ticket Booking
+- Browse available events.
+- Search events by keywords.
+- Filter events by category.
+- View ticket availability.
+- Book one or more tickets.
+- View booking history.
+- Cancel bookings according to the refund policy.
+- Record simulated payment references.
 
-1. **Admin / Organiser** – Manages venues, events, bookings and platform operations.
-2. **Gate Staff** – Verifies tickets and manages event entry.
-3. **Attendee** – Registers, browses events, books tickets and manages reservations.
+### Digital Tickets and Check-in
+- Generate unique QR-based digital tickets.
+- Display digital tickets to attendees.
+- Scan tickets using a mobile device.
+- Support manual ticket code entry.
+- Validate ticket status.
+- Prevent duplicate ticket check-ins.
 
-Access to protected features is enforced on the server.
+### Private Venue Hire
+- Submit private venue hire requests.
+- Specify booking dates and times.
+- Enter event purpose and guest count.
+- Evaluate venue availability.
+- Calculate venue hire prices.
+- Provide alternative venue or time suggestions when appropriate.
 
-## Local Setup
+### Organiser Dashboard
+- Monitor event activities.
+- View ticket sales.
+- Monitor attendance and check-ins.
+- View relevant agent communication records.
 
-### 1. Clone the repository
+## 4. Multi-Agent Architecture
 
-Clone the EventSphere repository from GitHub and open the project folder.
+EventSphere consists of five main software agents.
 
-### 2. Create a virtual environment
+### 4.1 VenueAgent
 
-```powershell
+**Goal:** Manage venue availability and prevent scheduling conflicts.
+
+Responsibilities:
+- Check venue availability.
+- Validate event schedules.
+- Prevent overlapping reservations.
+- Evaluate private venue hire requests.
+- Calculate venue hire prices.
+- Suggest alternative venues or time slots.
+
+### 4.2 BookingAgent
+
+**Goal:** Manage ticket bookings fairly and prevent ticket overselling.
+
+Responsibilities:
+- Receive booking requests.
+- Validate ticket quantities.
+- Check available ticket capacity.
+- Accept or refuse booking requests.
+- Process booking cancellations.
+- Calculate refunds.
+- Coordinate with other agents.
+
+### 4.3 TicketAgent
+
+**Goal:** Ensure the validity and uniqueness of digital tickets.
+
+Responsibilities:
+- Generate unique ticket codes.
+- Generate QR codes.
+- Validate ticket information.
+- Verify event details.
+- Prevent duplicate check-ins.
+- Reject invalid or cancelled tickets.
+
+### 4.4 WaitlistAgent
+
+**Goal:** Manage customers waiting for unavailable tickets.
+
+Responsibilities:
+- Maintain waitlist information.
+- Select eligible customers when tickets become available.
+- Offer released tickets.
+- Manage temporary ticket holds.
+- Handle expired offers.
+- Re-offer unclaimed tickets when appropriate.
+
+### 4.5 NotificationAgent
+
+**Goal:** Deliver relevant notifications to users.
+
+Responsibilities:
+- Receive messages from other agents.
+- Process event-related notifications.
+- Notify users about booking updates.
+- Communicate ticket availability.
+- Deliver important event information.
+
+### 4.6 Agent Communication
+
+The agents communicate using structured JSON messages.
+
+The communication performatives include:
+
+| Performatives | Description |
+|---|---|
+| REQUEST | Request an operation from another agent. |
+| AGREE | Accept a request. |
+| REFUSE | Reject a request with a reason. |
+| PROPOSE | Suggest an alternative. |
+| INFORM | Share information. |
+| FAILURE | Report an unsuccessful operation. |
+
+Agent messages contain:
+- Sender
+- Receiver
+- Performative
+- Content
+- Conversation ID
+
+**Note:** The detailed agent rules, persistent state and communication flows should reflect the actual implementation in the source code.
+
+## 5. Technologies Used
+
+| Technology | Purpose |
+|---|---|
+| Python 3.11+ | Backend programming |
+| FastAPI | REST API and backend framework |
+| Pydantic | Data validation |
+| PostgreSQL | Relational database |
+| Neon | Cloud PostgreSQL hosting |
+| SQLAlchemy | Database ORM |
+| Alembic | Database migrations |
+| HTML | Frontend structure |
+| CSS | Frontend styling |
+| JavaScript | Frontend functionality |
+| Jinja2 | HTML templating |
+| Pytest | Automated testing |
+| Git | Version control |
+| GitHub | Source code repository |
+| Vercel | Application deployment |
+
+## 6. Project Structure
+
+The main project structure is:
+
+```text
+EventSphere/
+│
+├── app/
+│   ├── agents/
+│   │   ├── venue_agent.py
+│   │   ├── booking_agent.py
+│   │   ├── ticket_agent.py
+│   │   ├── waitlist_agent.py
+│   │   └── notification_agent.py
+│   │
+│   ├── routers/
+│   ├── templates/
+│   ├── static/
+│   ├── main.py
+│   ├── config.py
+│   ├── database.py
+│   └── models.py
+│
+├── tests/
+│   ├── test_auth.py
+│   ├── test_events.py
+│   ├── test_venues.py
+│   ├── test_attendee_booking.py
+│   ├── test_checkin_routes.py
+│   ├── test_payment_routes.py
+│   ├── test_staff_assignments.py
+│   └── test_staff_dashboard.py
+│
+├── alembic/
+│
+├── scripts/
+│
+├── index.py
+├── .python-version
+├── requirements.txt
+├── alembic.ini
+├── README.md
+└── .env
+```
+
+The listed structure represents the main application areas. Individual filenames should be adjusted to match the actual repository.
+
+## 7. Installation and Local Setup
+
+Follow these steps to run EventSphere on a local Windows development environment.
+
+### Prerequisites
+
+Install the following:
+
+- Python 3.11 or newer.
+- PostgreSQL.
+- Git.
+- Visual Studio Code (recommended).
+
+### Step 1: Clone the Repository
+
+```bash
+git clone https://github.com/Izla389/EventSphere.git
+```
+
+Navigate into the project directory:
+
+```bash
+cd EventSphere
+```
+
+### Step 2: Create a Virtual Environment
+
+```bash
 python -m venv .venv
 ```
 
-Activate it on Windows PowerShell:
+Activate the virtual environment using PowerShell:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 3. Install dependencies
+### Step 3: Install Dependencies
 
-```powershell
-python -m pip install -r requirements.txt
+```bash
+python -m pip install --upgrade pip
 ```
 
-### 4. Create the PostgreSQL database
+Install the required packages:
 
-Create a database named:
+```bash
+pip install -r requirements.txt
+```
+
+### Step 4: Configure Environment Variables
+
+Create a `.env` file in the project root directory.
+
+Add the following variables:
+
+```env
+DATABASE_URL=postgresql+psycopg://username:password@localhost:5432/eventsphere_db
+
+SECRET_KEY=your_secure_random_secret_key
+
+SESSION_HTTPS_ONLY=False
+```
+
+**Important:**
+
+- For local development, use your local PostgreSQL connection string.
+- For production deployment, configure the Neon PostgreSQL connection string in Vercel.
+- Generate a secure and unique `SECRET_KEY`.
+- Never commit `.env` to GitHub.
+- Do not share database passwords or secret keys publicly.
+
+### Step 5: Configure the Database
+
+Create a PostgreSQL database named:
 
 ```text
 eventsphere_db
 ```
 
-### 5. Configure environment variables
+Ensure that PostgreSQL is running and the database credentials match the `.env` configuration.
 
-Create a `.env` file in the project root.
+### Step 6: Run Database Migrations
 
-Example:
+Apply the database migrations:
 
-```dotenv
-DATABASE_URL=postgresql+psycopg://postgres:YOUR_URL_ENCODED_PASSWORD@localhost:5432/eventsphere_db
-SECRET_KEY=YOUR_RANDOM_SECRET_KEY
-SESSION_HTTPS_ONLY=false
-```
-
-Generate a secure secret key:
-
-```powershell
-python -c "import secrets; print(secrets.token_urlsafe(48))"
-```
-
-Replace the placeholders with your own local configuration.
-
-If the PostgreSQL password contains special characters, URL-encode them in `DATABASE_URL`.
-
-**Important:** Never commit `.env` or actual passwords to GitHub.
-
-`SESSION_HTTPS_ONLY=false` is intended for local HTTP development only. Set it to `true` when deploying with HTTPS.
-
-### 6. Apply database migrations
-
-```powershell
+```bash
 python -m alembic upgrade head
 ```
 
-### 7. Start the FastAPI server
+Check the current migration version:
 
-```powershell
+```bash
+python -m alembic current
+```
+
+### Step 7: Start the Application
+
+Run the FastAPI application:
+
+```bash
 python -m uvicorn app.main:app --reload
 ```
 
-### 8. Open the application
+Open the application in your browser:
 
-- Login: http://127.0.0.1:8000/login
-- Registration: http://127.0.0.1:8000/register
-- Dashboard: http://127.0.0.1:8000/dashboard
-- API documentation: http://127.0.0.1:8000/docs
-- Health check: http://127.0.0.1:8000/health
-- Database check: http://127.0.0.1:8000/db-check
-
-The dashboard requires authentication.
-
-## Creating Admin and Staff Accounts
-
-Public registration creates attendee accounts only.
-
-Create an admin account locally:
-
-```powershell
-python -m scripts.create_user admin
+```text
+http://127.0.0.1:8000
 ```
 
-Create a gate staff account:
+Open the API documentation:
 
-```powershell
-python -m scripts.create_user staff
+```text
+http://127.0.0.1:8000/docs
 ```
 
-Follow the terminal prompts to provide the account name, email address and password.
+## 8. Environment Variables
 
-## Running Tests
+The application uses environment variables to manage sensitive configuration information.
 
-Run the authentication tests:
+| Variable | Description |
+|---|---|
+| DATABASE_URL | PostgreSQL database connection string |
+| SECRET_KEY | Secret key used by the application |
+| SESSION_HTTPS_ONLY | Controls HTTPS-only session cookies |
 
-```powershell
+### Local Environment
+
+Local development uses the local PostgreSQL database.
+
+### Production Environment
+
+Production uses the Neon PostgreSQL database.
+
+Configure the production environment variables through:
+
+**Vercel Dashboard → EventSphere Project → Settings → Environment Variables**
+
+Add the required variables:
+
+```text
+DATABASE_URL
+SECRET_KEY
+SESSION_HTTPS_ONLY
+```
+
+Use the appropriate production values and enable HTTPS-only session cookies when the application is served over HTTPS.
+
+## 9. Database Migrations
+
+EventSphere uses Alembic to manage database schema changes.
+
+Useful commands:
+
+Check the current migration:
+
+```bash
+python -m alembic current
+```
+
+Display migration history:
+
+```bash
+python -m alembic history
+```
+
+Display available migration heads:
+
+```bash
+python -m alembic heads
+```
+
+Apply migrations:
+
+```bash
+python -m alembic upgrade head
+```
+
+## 10. Running Tests
+
+EventSphere uses Pytest for automated testing.
+
+### Run All Tests
+
+```bash
+python -m pytest -q
+```
+
+### Run Tests with Detailed Output
+
+```bash
+python -m pytest -v
+```
+
+### Run a Specific Test File
+
+```bash
 python -m pytest tests/test_auth.py -v
 ```
 
-Run all available tests:
+### Display Collected Tests
 
-```powershell
-python -m pytest tests/ -v
+```bash
+python -m pytest --collect-only -q
 ```
 
-**Current verified result:** 6 authentication tests passed.
+### Test Coverage Requirements
 
-The tests cover password hashing, registration, CSRF validation, login/logout and role-based access restrictions.
+The assessment requires at least 10 meaningful tests.
 
-## Development Progress
+Testing should include:
 
-| Step | Description | Status |
+1. User registration.
+2. User authentication.
+3. VenueAgent decision-making.
+4. BookingAgent decision-making.
+5. TicketAgent validation.
+6. WaitlistAgent functionality.
+7. NotificationAgent functionality.
+8. Ticket overbooking prevention.
+9. Duplicate check-in prevention.
+10. Role-based access control.
+
+Run the tests and record the actual results before submission.
+
+## 11. Demo Accounts
+
+The application provides three types of demonstration accounts.
+
+| User Role | Email | Password |
 |---|---|---|
-| 1–2 | Development tools and PostgreSQL setup | Completed |
-| 3 | FastAPI project initialization | Completed |
-| 4 | PostgreSQL integration | Completed |
-| 5 | SQLAlchemy models and Alembic migrations | Completed |
-| 6 | Authentication, sessions, CSRF and user roles | Completed |
-| 7 | Admin venue management | In Progress |
-| 8 | Event management and scheduling | Pending |
-| 9 | Ticket booking and simulated payments | Pending |
-| 10 | QR tickets and check-in | Pending |
-| 11 | Five-agent system and JSON communication | Pending |
-| 12 | Automated waitlist and notifications | Pending |
-| 13 | Private venue hire, dashboard and frontend completion | Pending |
-| 14 | Final testing, deployment and submission | Pending |
+| Admin | izlaizzath@gmail.com | abc123456789 |
+| Staff | uovizla@gmail.com | uov123456789abc |
+| Attendee | hima@gmail.com| hima123456789 |
 
-## Agent-Based Architecture
+Use the actual working demo account credentials when preparing the final README.
 
-EventSphere will include five agents:
+Do not include personal account credentials.
 
-1. **VenueAgent** – Handles venue availability, scheduling conflicts, private hire decisions, pricing and alternatives.
-2. **BookingAgent** – Manages booking decisions, ticket limits, cancellations and refunds.
-3. **TicketAgent** – Issues and validates digital tickets and QR-code check-ins.
-4. **WaitlistAgent** – Manages waitlists, seat reoffers and automatic offer expiry.
-5. **NotificationAgent** – Processes agent notifications and delivers user updates.
+## 12. Deployment
 
-Agents will communicate using structured JSON messages, with message history stored for monitoring and debugging.
+EventSphere is deployed using Vercel with Neon PostgreSQL as its production database.
 
-**Status:** Planned for upcoming development stages.
+### Deployment Components
 
-## Security
+| Component | Service |
+|---|---|
+| Application hosting | Vercel |
+| Database hosting | Neon |
+| Source code | GitHub |
+| Backend | FastAPI |
+| Database | PostgreSQL |
 
-EventSphere uses:
-- Hashed passwords instead of plaintext password storage
-- Signed, HTTP-only session cookies
-- CSRF protection for authentication forms
-- Server-side role-based authorization
-- Environment variables for sensitive configuration
-- Git ignore rules to exclude local secrets
+### Deployment Process
 
-Payments will be simulated; real payment processing is outside the assignment scope.
+1. Push the application source code to GitHub.
+2. Import the GitHub repository into Vercel.
+3. Configure the required environment variables.
+4. Configure the Python runtime and application entry point.
+5. Deploy the application.
+6. Verify the deployment through the public HTTPS URL.
+7. Verify database connectivity and API functionality.
 
-Additional production security measures will be configured before public deployment.
+### Production Links
 
-## GitHub Development Workflow
+**Live Application:**
 
-The project is maintained using GitHub Desktop.
+https://event-sphere-taupe-omega.vercel.app
 
-After each completed and tested development stage:
+**FastAPI API Documentation:**
 
-1. Review the changed files in GitHub Desktop.
-2. Verify that private configuration files are excluded.
-3. Create a descriptive commit.
-4. Push the commit to GitHub.
+https://event-sphere-taupe-omega.vercel.app/docs
 
-This maintains a clear history of project development.
+**Neon Database Console:**
 
-## Assignment
+https://console.neon.tech/
 
-**Module:** IT4123 – Agent Based Computing  
-**Assessment:** ICA 02  
-**Project:** EventSphere
+## 13. Security Considerations
 
-This project is under active development.
+The application considers the following security requirements:
+
+- Passwords must be hashed before storage.
+- Role-based authorization must protect administrative and staff operations.
+- Sensitive credentials must be stored in environment variables.
+- Database connections must use secure credentials.
+- Input validation must be performed using Pydantic.
+- CSRF protection must be applied to relevant form-based operations.
+- Production sessions must use appropriate HTTPS security settings.
+
+### Simulated Payments
+
+EventSphere uses simulated payments for assessment purposes.
+
+No real bank account, credit card or payment gateway is connected.
+
+## 14. Important Assessment Requirements
+
+The project is developed according to the IT4123 ICA 02 assignment requirements.
+
+The main assessment areas include:
+
+- User registration and authentication.
+- Role-based access control.
+- Venue management.
+- Event management.
+- Ticket booking and cancellation.
+- QR-based digital tickets.
+- Ticket verification and check-in.
+- Private venue hire.
+- Organiser dashboard.
+- Five cooperating autonomous agents.
+- Structured agent communication.
+- Reactive and proactive agent behaviour.
+- Persistent agent state.
+- Automated testing.
+- Public HTTPS deployment.
+
+## 15. Future Improvements
+
+Possible future enhancements include:
+
+- Enhanced notification services.
+- Advanced event search and filtering.
+- More detailed analytics and reporting.
+- Improved mobile user experience.
+- Additional agent decision-making capabilities.
+- Enhanced monitoring of agent communication.
+
+## 16. Author
+
+**Project Name:** EventSphere
+
+**Course:** IT4123 – Agent Based Computing Practical
+
+**Assessment:** ICA 02
+
+**Repository:** https://github.com/Izla389/EventSphere
+
+**Live Application:** https://event-sphere-taupe-omega.vercel.app
+
+---
+
+## License
+
+This project was developed for academic purposes as part of the IT4123 Agent Based Computing Practical assessment.
